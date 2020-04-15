@@ -42,7 +42,7 @@ danmudiv.css({
     "left":"0px",
     "bottom":"10px",
     "z-index":"99",
-    "color": "white",
+    "color": "red",
     "font-size": "25px",
     "text-align":"center",
 });
@@ -196,7 +196,7 @@ function DanmuSocket() {
                             var kaorouman= bjson.info[1]
                             //console.log(kaorouman);
                             //danmudiv.text(kaorouman);
-                            if(kaorouman[0]=='【'){
+                            if(kaorouman.indexOf("【") != -1){
                                 danmudiv.text(kaorouman);
                                 //暂时不使用定时器清除字幕，因为好像会堵塞程序，造成字幕显示缓慢
                                 /*clearTimeout(clearDanmu);
