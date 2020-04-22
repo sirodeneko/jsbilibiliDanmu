@@ -191,13 +191,15 @@ function DanmuSocket() {
                         //console.log(msgBody);
                         var bjson=JSON.parse(utf8decoder.decode(msgBody));
                         if(bjson.cmd=="DANMU_MSG"){
-                            // kaorouman里为弹幕消息，可自己根据需要进行过滤
+                            // tongchuan里为弹幕消息，可自己根据需要进行过滤
                             // 调用danmudiv.text(" 传入字符串 ");可以显示在屏幕
-                            var kaorouman= bjson.info[1]
-                            //console.log(kaorouman);
-                            //danmudiv.text(kaorouman);
-                            if(kaorouman.indexOf("【") != -1){
-                                danmudiv.text(kaorouman);
+                            var tongchuan= bjson.info[1]
+                            //console.log(tongchuan);
+                            //danmudiv.text(tongchuan);
+                            if(tongchuan.indexOf("【") != -1){
+                                tongchuan.replace("【","");
+                                tongchuan.replace("】","");
+                                danmudiv.text(tongchuan);
                                 //暂时不使用定时器清除字幕，因为好像会堵塞程序，造成字幕显示缓慢
                                 /*clearTimeout(clearDanmu);
                                 clearDanmu=setTimeout(function(){
