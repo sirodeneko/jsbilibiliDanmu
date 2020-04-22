@@ -40,10 +40,10 @@ danmudiv.css({
     "magin":"0 auto",
     "position":"absolute",
     "left":"0px",
-    "bottom":"10px",
+    "bottom":"28px",//修改此数值改变字幕距底部的高度
     "z-index":"99",
-    "color": "red",
-    "font-size": "25px",
+    "color": "red",//修改此处改变字幕颜色
+    "font-size": "25px",//修改此处改变字体大小
     "text-align":"center",
 });
 danmudiv.text("脚本启动");
