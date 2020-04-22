@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name      bilibili直播烤肉man字幕显示
-// @version   20200415
+// @version   20200422
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -196,9 +196,10 @@ function DanmuSocket() {
                             var tongchuan= bjson.info[1]
                             //console.log(tongchuan);
                             //danmudiv.text(tongchuan);
+                            //console.log(bjson); .info[2][1] 为人名
                             if(tongchuan.indexOf("【") != -1){
-                                tongchuan.replace("【","");
-                                tongchuan.replace("】","");
+                                tongchuan=tongchuan.replace("【","");
+                                tongchuan=tongchuan.replace("】","");
                                 danmudiv.text(tongchuan);
                                 //暂时不使用定时器清除字幕，因为好像会堵塞程序，造成字幕显示缓慢
                                 /*clearTimeout(clearDanmu);
@@ -215,3 +216,57 @@ function DanmuSocket() {
     });
 }
 
+
+
+/* 弹幕json示例
+{
+    "info": [
+        [
+            0, 
+            1, 
+            25, 
+            16777215, 
+            1526267394, 
+            -1189421307, 
+            0, 
+            "46bc1d5e", 
+            0
+        ], 
+        "空投！", 
+        [
+            10078392, 
+            "白の驹", 
+            0, 
+            0, 
+            0, 
+            10000, 
+            1, 
+            ""
+        ], 
+        [
+            11, 
+            "狗雨", 
+            "宫本狗雨", 
+            102, 
+            10512625, 
+            ""
+        ], 
+        [
+            23, 
+            0, 
+            5805790, 
+            ">50000"
+        ], 
+        [
+            "title-111-1", 
+            "title-111-1"
+        ], 
+        0, 
+        0, 
+        {
+            "uname_color": ""
+        }
+    ], 
+    "cmd": "DANMU_MSG"
+}
+*/
