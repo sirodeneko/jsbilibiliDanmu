@@ -29,6 +29,15 @@ var seqOffset = 12;
 var socket;
 var utf8decoder = new TextDecoder();
 var f=0; //不知道为什么会建立两次连接，用这个标记一下。
+var zimuBottom="28px";//修改此数值改变字幕距底部的高度
+var zimuColor="red";//修改此处改变字幕颜色
+var zimuFontSize="25px";//修改此处改变字体大小
+
+var IsSikiName=0;// 1为启动同传man过滤 0为不启动，默认不启动
+//如果要启动同传man过滤，启动后需要修改SikiName里括号里的内容
+//如SikiName=["斋藤飞鳥Offcial","小明1","小明2"],则只会显示名字为，斋藤飞鳥Offcial，小明1，小明2的同传
+//此变量为字符串数字，元素为字符串变量，元素内容由 , 分隔(不是中文下的 ，)
+var SikiName=[""];
 
 // 创建页面字幕元素
 var danmudiv=$('<div></div>');
@@ -40,10 +49,10 @@ danmudiv.css({
     "magin":"0 auto",
     "position":"absolute",
     "left":"0px",
-    "bottom":"28px",//修改此数值改变字幕距底部的高度
+    "bottom":zimuBottom,
     "z-index":"99",
-    "color": "red",//修改此处改变字幕颜色
-    "font-size": "25px",//修改此处改变字体大小
+    "color":zimuColor,
+    "font-size": zimuFontSize,
     "text-align":"center",
 });
 danmudiv.text("脚本启动");
@@ -197,10 +206,17 @@ function DanmuSocket() {
                             //console.log(tongchuan);
                             //danmudiv.text(tongchuan);
                             //console.log(bjson); .info[2][1] 为人名
+                            var manName=bjson.info[2][1];
+                            (SikiName.indexOf(manName)>-1)
                             if(tongchuan.indexOf("【") != -1){
                                 tongchuan=tongchuan.replace("【","");
                                 tongchuan=tongchuan.replace("】","");
-                                danmudiv.text(tongchuan);
+                                if(!IsSikiName){
+                                    danmudiv.text(tongchuan);
+                                }else if((SikiName.indexOf(manName)>-1)){
+                                    danmudiv.text(tongchuan);
+                                }
+                                
                                 //暂时不使用定时器清除字幕，因为好像会堵塞程序，造成字幕显示缓慢
                                 /*clearTimeout(clearDanmu);
                                 clearDanmu=setTimeout(function(){
