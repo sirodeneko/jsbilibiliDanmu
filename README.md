@@ -12,20 +12,16 @@
 
 3. 自定义修改
 ```
-//代码第36行
-danmudiv.css({
-    "height":"50px",
-    "min-width":"100px",
-    "width":$("#live-player-ctnr").width(),
-    "magin":"0 auto",
-    "position":"absolute",
-    "left":"0px",
-    "bottom":"28px",//修改此数值改变字幕距底部的高度
-    "z-index":"99",
-    "color": "red",//修改此处改变字幕颜色 附上颜色链接 http://bbs.bianzhirensheng.com/color01.html 支持英文单词 和十六进制`如#ef5b9c`
-    "font-size": "25px",//修改此处改变字体大小
-    "text-align":"center",
-});
+//代码第32行
+var zimuBottom="28px";//修改此数值改变字幕距底部的高度
+var zimuColor="red";//修改此处改变字幕颜色
+var zimuFontSize="25px";//修改此处改变字体大小
+
+var IsSikiName=0;// 1为启动同传man过滤 0为不启动，默认不启动
+//如果要启动同传man过滤，启动后需要修改SikiName里括号里的内容
+//如SikiName=["斋藤飞鳥Offcial","小明1","小明2"],则只会显示名字为，斋藤飞鳥Offcial，小明1，小明2的同传
+//此变量为字符串数字，元素为字符串变量，元素内容由 , 分隔(不是中文下的 ，)
+var SikiName=[""];
 ```
 
 
