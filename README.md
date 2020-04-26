@@ -29,5 +29,7 @@ var SikiName=[""];
   ![image.png](https://i.loli.net/2020/04/15/I1OQEcVUHjbMreT.png)
 
 
-### 谷歌浏览器已经上传了，可直接下载（应该可以使用吧）
-  
+### 谷歌浏览器已经上传了，可直接下载（应该可以使用吧）  
+  [传送门](https://github.com/sirodeneko/jsbilibiliDanmu/raw/master/Chrome.exe)
+###   这是油猴的安装包（国内搬运）  
+  [传送门](https://www.xmpojie.com/697.html)
