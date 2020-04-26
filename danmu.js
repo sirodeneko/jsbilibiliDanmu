@@ -17,6 +17,7 @@ if (window.top != window.self)  //-- Don't run on frames or iframes
     return;
 
 var room_id=22129083;//默认房间号
+var uid=0;
 var url;
 var mytoken;
 var port;
@@ -72,6 +73,21 @@ if(relUrl.indexOf("?") != -1){
     relUrl = relUrl.split("?")[0];
 }
 room_id=parseInt(relUrl);
+
+//获取你的uid
+$.ajax({
+    url: 'https://api.live.bilibili.com/xlive/web-ucenter/user/get_user_info',
+    type: 'GET',
+    dataType: 'json',
+    success: function (data) {
+        console.log(data.data);
+        uid=data.data.uid;
+        console.log(uid);
+    },
+    xhrFields: {
+      withCredentials: true // 这里设置了withCredentials
+    },
+});
 //获取真实房间号
 $.ajax({
     url: '//api.live.bilibili.com/room/v1/Room/room_init?id=' + room_id,
@@ -84,7 +100,7 @@ $.ajax({
 });
 //获取弹幕连接和token
 $.ajax({
-    url: '//api.live.bilibili.com/room/v1/Danmu/getConf?room_id=704808&platform=pc&player=web',
+    url: '//api.live.bilibili.com/room/v1/Danmu/getConf?room_id='+room_id+'&platform=pc&player=web',
     type: 'GET',
     dataType: 'json',
     success: function (data) {
@@ -142,9 +158,9 @@ function DanmuSocket() {
         console.log('Danmu WebSocket Server Connected.');
         console.log('Handshaking...');
         var token = JSON.stringify({
-            'uid': 0,
+            'uid': uid,
             'roomid': room_id,
-            'token': mytoken
+            'key': mytoken
         });
         var headerBuf = new ArrayBuffer(rawHeaderLen);
         var headerView = new DataView(headerBuf, 0);
@@ -207,7 +223,6 @@ function DanmuSocket() {
                             //danmudiv.text(tongchuan);
                             //console.log(bjson); .info[2][1] 为人名
                             var manName=bjson.info[2][1];
-                            (SikiName.indexOf(manName)>-1)
                             if(tongchuan.indexOf("【") != -1){
                                 tongchuan=tongchuan.replace("【","");
                                 tongchuan=tongchuan.replace("】","");
@@ -216,7 +231,7 @@ function DanmuSocket() {
                                 }else if((SikiName.indexOf(manName)>-1)){
                                     danmudiv.text(tongchuan);
                                 }
-                                
+
                                 //暂时不使用定时器清除字幕，因为好像会堵塞程序，造成字幕显示缓慢
                                 /*clearTimeout(clearDanmu);
                                 clearDanmu=setTimeout(function(){
@@ -238,51 +253,51 @@ function DanmuSocket() {
 {
     "info": [
         [
-            0, 
-            1, 
-            25, 
-            16777215, 
-            1526267394, 
-            -1189421307, 
-            0, 
-            "46bc1d5e", 
+            0,
+            1,
+            25,
+            16777215,
+            1526267394,
+            -1189421307,
+            0,
+            "46bc1d5e",
             0
-        ], 
-        "空投！", 
+        ],
+        "空投！",
         [
-            10078392, 
-            "白の驹", 
-            0, 
-            0, 
-            0, 
-            10000, 
-            1, 
+            10078392,
+            "白の驹",
+            0,
+            0,
+            0,
+            10000,
+            1,
             ""
-        ], 
+        ],
         [
-            11, 
-            "狗雨", 
-            "宫本狗雨", 
-            102, 
-            10512625, 
+            11,
+            "狗雨",
+            "宫本狗雨",
+            102,
+            10512625,
             ""
-        ], 
+        ],
         [
-            23, 
-            0, 
-            5805790, 
+            23,
+            0,
+            5805790,
             ">50000"
-        ], 
+        ],
         [
-            "title-111-1", 
+            "title-111-1",
             "title-111-1"
-        ], 
-        0, 
-        0, 
+        ],
+        0,
+        0,
         {
             "uname_color": ""
         }
-    ], 
+    ],
     "cmd": "DANMU_MSG"
 }
 */
