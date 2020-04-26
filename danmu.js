@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name      bilibili直播烤肉man字幕显示
-// @version   20200422
+// @version   20200426
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -80,9 +80,9 @@ $.ajax({
     type: 'GET',
     dataType: 'json',
     success: function (data) {
-        console.log(data.data);
+        //console.log(data.data);
         uid=data.data.uid;
-        console.log(uid);
+        //console.log(uid);
     },
     xhrFields: {
       withCredentials: true // 这里设置了withCredentials
