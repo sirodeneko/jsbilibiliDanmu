@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name      bilibili直播烤肉man字幕显示
-// @version   20200426
+// @version   20200428
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -30,7 +30,7 @@ var seqOffset = 12;
 var socket;
 var utf8decoder = new TextDecoder();
 var f=0; //不知道为什么会建立两次连接，用这个标记一下。
-var zimuBottom="28px";//修改此数值改变字幕距底部的高度
+var zimuBottom="58px";//修改此数值改变字幕距底部的高度
 var zimuColor="red";//修改此处改变字幕颜色
 var zimuFontSize="25px";//修改此处改变字体大小
 
@@ -44,20 +44,24 @@ var SikiName=[""];
 var danmudiv=$('<div></div>');
 danmudiv.attr('id','danmu');
 danmudiv.css({
-    "height":"50px",
+    "height":"1px",
     "min-width":"100px",
     "width":$("#live-player-ctnr").width(),
     "magin":"0 auto",
     "position":"absolute",
     "left":"0px",
     "bottom":zimuBottom,
-    "z-index":"99",
+    "z-index":"14",
     "color":zimuColor,
     "font-size": zimuFontSize,
     "text-align":"center",
+    "font-weight": "bold",
+    "pointer-events":"none",
 });
 danmudiv.text("脚本启动");
 danmudiv.appendTo($("#live-player-ctnr"));
+
+$('.bilibili-live-player-video-controller-right').css({"z-index":20});
 
 //字幕清除定时器
 var clearDanmu=setTimeout(function(){
@@ -80,9 +84,9 @@ $.ajax({
     type: 'GET',
     dataType: 'json',
     success: function (data) {
-        //console.log(data.data);
+        console.log(data.data);
         uid=data.data.uid;
-        //console.log(uid);
+        console.log(uid);
     },
     xhrFields: {
       withCredentials: true // 这里设置了withCredentials
