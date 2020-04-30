@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name      bilibili直播烤肉man字幕显示
-// @version   20200428
+// @name      bilibili vtb直播同传man字幕显示
+// @version   20200430
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -30,10 +30,10 @@ var seqOffset = 12;
 var socket;
 var utf8decoder = new TextDecoder();
 var f=0; //不知道为什么会建立两次连接，用这个标记一下。
-var zimuBottom="58px";//修改此数值改变字幕距底部的高度
+var zimuBottom="40px";//修改此数值改变字幕距底部的高度
 var zimuColor="red";//修改此处改变字幕颜色
 var zimuFontSize="25px";//修改此处改变字体大小
-
+var deltime=3000;//字幕存在时间
 var IsSikiName=0;// 1为启动同传man过滤 0为不启动，默认不启动
 //如果要启动同传man过滤，启动后需要修改SikiName里括号里的内容
 //如SikiName=["斋藤飞鳥Offcial","小明1","小明2"],则只会显示名字为，斋藤飞鳥Offcial，小明1，小明2的同传
@@ -44,7 +44,6 @@ var SikiName=[""];
 var danmudiv=$('<div></div>');
 danmudiv.attr('id','danmu');
 danmudiv.css({
-    "height":"1px",
     "min-width":"100px",
     "width":$("#live-player-ctnr").width(),
     "magin":"0 auto",
@@ -58,15 +57,7 @@ danmudiv.css({
     "font-weight": "bold",
     "pointer-events":"none",
 });
-danmudiv.text("脚本启动");
 danmudiv.appendTo($("#live-player-ctnr"));
-
-$('.bilibili-live-player-video-controller-right').css({"z-index":20});
-
-//字幕清除定时器
-var clearDanmu=setTimeout(function(){
-    danmudiv.text(" ");
-},3000);
 
 //获取当前房间编号
 var UR = document.location.toString();
@@ -84,9 +75,9 @@ $.ajax({
     type: 'GET',
     dataType: 'json',
     success: function (data) {
-        console.log(data.data);
+        //console.log(data.data);
         uid=data.data.uid;
-        console.log(uid);
+        //console.log(uid);
     },
     xhrFields: {
       withCredentials: true // 这里设置了withCredentials
@@ -138,18 +129,115 @@ function mergeArrayBuffer(ab1, ab2) {
 function heartBeat() {
     var headerBuf = new ArrayBuffer(rawHeaderLen);
     var headerView = new DataView(headerBuf, 0);
-    headerView.setInt32(packetOffset, rawHeaderLen);
+    var ob="[object Object]";
+    var bodyBuf = textEncoder(ob);
+    headerView.setInt32(packetOffset, rawHeaderLen + bodyBuf.byteLength);
     headerView.setInt16(headerOffset, rawHeaderLen);
     headerView.setInt16(verOffset, 1);
     headerView.setInt32(opOffset, 2);
     headerView.setInt32(seqOffset, 1);
     //console.log('发送信条');
-    socket.send(headerBuf);
+    socket.send(mergeArrayBuffer(headerBuf, bodyBuf));
 };
+// 导入css
+
+var style = document.createElement("style");
+style.type = "text/css";
+var text = document.createTextNode(`#danmu .message {
+    transition: height 0.2s ease-in-out, margin 0.2s ease-in-out;
+}
+
+#danmu .message .text {
+    text-align:center;
+    font-weight: bold;
+    pointer-events:none;
+}
+
+@keyframes message-move-in {
+    0% {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#danmu .message.move-in {
+    animation: message-move-in 0.3s ease-in-out;
+}
+
+
+@keyframes message-move-out {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+}
+#danmu .message.move-out {
+    animation: message-move-out 0.3s ease-in-out;
+    animation-fill-mode: forwards;
+}`
+);
+style.appendChild(text);
+var head = document.getElementsByTagName("head")[0];
+head.appendChild(style);
+
+// 消息渲染器
+class Message {
+    //构造函数
+    constructor() {
+        const containerId = 'danmu';
+        this.containerEl = document.getElementById(containerId);
+    }
+
+    show({text = '' ,duration = 2000}) {
+        // 创建一个Element对象
+        let messageEl = document.createElement('div');
+        // 设置消息class，这里加上move-in可以直接看到弹出效果
+        messageEl.className = 'message move-in';
+        // 消息内部html字符串
+        messageEl.innerHTML = `
+            <div class="text">${text}</div>
+        `;
+        // 追加到message-container末尾
+        // this.containerEl属性是我们在构造函数中创建的message-container容器
+        this.containerEl.appendChild(messageEl);
+
+         // 用setTimeout来做一个定时器
+        setTimeout(() => {
+            // 首先把move-in这个弹出动画类给移除掉，要不然会有问题，可以自己测试下
+            messageEl.className = messageEl.className.replace('move-in', '');
+            // 增加一个move-out类
+            messageEl.className += 'move-out';
+
+             // move-out动画结束后把元素的高度和边距都设置为0
+            // 由于我们在css中设置了transition属性，所以会有一个过渡动画
+            messageEl.addEventListener('animationend', () => {
+                messageEl.setAttribute('style', 'height: 0; margin: 0');
+            });
+
+            // 这个地方是监听动画结束事件，在动画结束后把消息从dom树中移除。
+            // 如果你是在增加move-out后直接调用messageEl.remove，那么你不会看到任何动画效果
+            messageEl.addEventListener('transitionend', () => {
+                // Element对象内部有一个remove方法，调用之后可以将该元素从dom树种移除！
+                messageEl.remove();
+            });
+        }, duration);
+    }
+
+}
+
+const message = new Message();
+
 // socket连接
 function DanmuSocket() {
     var ws = 'wss';
-    //console.log('小爷来了');
     if(f){
         return;
     }
@@ -182,9 +270,16 @@ function DanmuSocket() {
     });
 
     socket.addEventListener('error', function (event) {
-        console.log('WebSocket error: ', event);
-        console.log('WebSocket 关闭 ');
+        console.log('WebSocket 错误: ', event);
         socket.close();
+        f=0;
+        console.log('WebSocket 重连 ');
+        DanmuSocket();
+    });
+
+     socket.addEventListener('close', function (event) {
+         console.log('WebSocket 关闭 ');
+
     });
 
     // Listen for messages
@@ -212,36 +307,33 @@ function DanmuSocket() {
                         packetLen = packetView.getUint32(offset);
                         headerLen = packetView.getInt16(offset + headerOffset);
                         msgBody = msg.slice(offset + headerLen, offset + packetLen);
-                        /*if (!msgBody)
-                            textDecoder = getDecoder(false);
-                            msgBody = textEncoder(msg.slice(offset + headerLen, offset + packetLen));
-                        }*/
                         //console.log("packetLen="+packetLen+"  headerLen="+headerLen);
                         //console.log(msgBody);
                         var bjson=JSON.parse(utf8decoder.decode(msgBody));
                         if(bjson.cmd=="DANMU_MSG"){
                             // tongchuan里为弹幕消息，可自己根据需要进行过滤
-                            // 调用danmudiv.text(" 传入字符串 ");可以显示在屏幕
+                            // 调用 message.show可以显示在屏幕
                             var tongchuan= bjson.info[1]
                             //console.log(tongchuan);
-                            //danmudiv.text(tongchuan);
                             //console.log(bjson); .info[2][1] 为人名
                             var manName=bjson.info[2][1];
+
                             if(tongchuan.indexOf("【") != -1){
                                 tongchuan=tongchuan.replace("【","");
                                 tongchuan=tongchuan.replace("】","");
                                 if(!IsSikiName){
-                                    danmudiv.text(tongchuan);
+                                    //console.log("显示字幕");
+                                    message.show({
+                                        text: tongchuan,
+                                        duration: deltime,
+                                    });
                                 }else if((SikiName.indexOf(manName)>-1)){
-                                    danmudiv.text(tongchuan);
+                                    message.show({
+                                        text: tongchuan,
+                                        duration:deltime,
+                                    });
                                 }
 
-                                //暂时不使用定时器清除字幕，因为好像会堵塞程序，造成字幕显示缓慢
-                                /*clearTimeout(clearDanmu);
-                                clearDanmu=setTimeout(function(){
-                                    danmudiv.text(" ");
-                                    console.log("定时器触发");
-                                },3000);*/
                             }
                         }
                     }
