@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name      bilibili vtb直播同传man字幕显示
-// @version   20200430
+// @version   202005202
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
 // @match     https://live.bilibili.com/*
 // @require      https://cdn.staticfile.org/jquery/1.12.4/jquery.min.js
+// @require  https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.10/pako.min.js
 // @namespace http://www.xiaosiro.cn
 // @grant     unsafeWindow
 // ==/UserScript==
@@ -38,7 +39,7 @@ var IsSikiName=0;// 1为启动同传man过滤 0为不启动，默认不启动
 //如果要启动同传man过滤，启动后需要修改SikiName里括号里的内容
 //如SikiName=["斋藤飞鳥Offcial","小明1","小明2"],则只会显示名字为，斋藤飞鳥Offcial，小明1，小明2的同传
 //此变量为字符串数字，元素为字符串变量，元素内容由 , 分隔(不是中文下的 ，)
-var SikiName=[""];
+var SikiName=["白峰さやか"];
 
 // 创建页面字幕元素
 var danmudiv=$('<div></div>');
@@ -107,7 +108,7 @@ $.ajax({
     xhrFields: {withCredentials: true}
 })
 // 蜜汁字符转换
-function textEncoder(str){
+function txtEncoder(str){
     var buf = new ArrayBuffer(str.length);
     var bufView = new Uint8Array(buf);
     for (var i = 0, strlen = str.length; i < strlen; i++) {
@@ -130,7 +131,7 @@ function heartBeat() {
     var headerBuf = new ArrayBuffer(rawHeaderLen);
     var headerView = new DataView(headerBuf, 0);
     var ob="[object Object]";
-    var bodyBuf = textEncoder(ob);
+    var bodyBuf = txtEncoder(ob);
     headerView.setInt32(packetOffset, rawHeaderLen + bodyBuf.byteLength);
     headerView.setInt16(headerOffset, rawHeaderLen);
     headerView.setInt16(verOffset, 1);
@@ -235,6 +236,69 @@ class Message {
 
 const message = new Message();
 
+const textEncoder = new TextEncoder('utf-8');
+const textDecoder = new TextDecoder('utf-8');
+
+const readInt = function(buffer,start,len){
+  let result = 0
+  for(let i=len - 1;i >= 0;i--){
+    result += Math.pow(256,len - i - 1) * buffer[start + i]
+  }
+  return result
+}
+
+const writeInt = function(buffer,start,len,value){
+  let i=0
+  while(i<len){
+    buffer[start + i] = value/Math.pow(256,len - i - 1)
+    i++
+  }
+}
+
+function encode(str,op){
+  let data = textEncoder.encode(str);
+  let packetLen = 16 + data.byteLength;
+  let header = [0,0,0,0,0,16,0,1,0,0,0,op,0,0,0,1]
+  writeInt(header,0,4,packetLen)
+  return (new Uint8Array(header.concat(...data))).buffer
+}
+function decode(blob) {
+  let buffer = new Uint8Array(blob)
+  let result = {}
+  result.packetLen = readInt(buffer, 0, 4)
+  result.headerLen = readInt(buffer, 4, 2)
+  result.ver = readInt(buffer, 6, 2)
+  result.op = readInt(buffer, 8, 4)
+  result.seq = readInt(buffer, 12, 4)
+  if (result.op === 5) {
+    result.body = []
+    let offset = 0;
+    while (offset < buffer.length) {
+      let packetLen = readInt(buffer, offset + 0, 4)
+      let headerLen = 16// readInt(buffer,offset + 4,4)
+      if (result.ver == 2) {
+        let data = buffer.slice(offset + headerLen, offset + packetLen);
+        let newBuffer =pako.inflate(new Uint8Array(data));
+        const obj = decode(newBuffer);
+        const body = obj.body;
+        result.body = result.body.concat(body);
+      } else {
+        let data = buffer.slice(offset + headerLen, offset + packetLen);
+        let body = textDecoder.decode(data);
+        if (body) {
+          result.body.push(JSON.parse(body));
+        }
+      }
+      offset += packetLen;
+    }
+  } else if (result.op === 3) {
+    result.body = {
+      count: readInt(buffer, 16, 4)
+    };
+  }
+  return result;
+}
+
 // socket连接
 function DanmuSocket() {
     var ws = 'wss';
@@ -252,11 +316,12 @@ function DanmuSocket() {
         var token = JSON.stringify({
             'uid': uid,
             'roomid': room_id,
-            'key': mytoken
+            'key': mytoken,
+            'protover':1,
         });
         var headerBuf = new ArrayBuffer(rawHeaderLen);
         var headerView = new DataView(headerBuf, 0);
-        var bodyBuf = textEncoder(token);
+        var bodyBuf = txtEncoder(token);
         headerView.setInt32(packetOffset, rawHeaderLen + bodyBuf.byteLength);
         headerView.setInt16(headerOffset, rawHeaderLen);
         headerView.setInt16(verOffset, 1);
@@ -279,47 +344,29 @@ function DanmuSocket() {
 
      socket.addEventListener('close', function (event) {
          console.log('WebSocket 关闭 ');
-
+         f=0;
+         console.log('WebSocket 重连 ');
+         DanmuSocket();
     });
 
     // Listen for messages
-    socket.addEventListener('message', function (evt) {
-        var data = evt.data;
-        var dataView = new DataView(data, 0);
-        var packetLen = dataView.getUint32(packetOffset);
-        if (dataView.byteLength >= packetLen) {
-            var headerLen = dataView.getInt16(headerOffset);
-            var ver = dataView.getInt16(verOffset);
-            var op = dataView.getUint32(opOffset);
-            var seq = dataView.getUint32(seqOffset);
-            switch (op) {
-                case 8:
-                    console.log("心跳？");
-                    break;
-                case 3:
-                    console.log('online='+dataView.getInt32(16));
-                    break;
-                case 5:
-                    var packetView = dataView;
-                    var msg = data;
-                    var msgBody;
-                    for (var offset = 0; offset < msg.byteLength; offset += packetLen) {
-                        packetLen = packetView.getUint32(offset);
-                        headerLen = packetView.getInt16(offset + headerOffset);
-                        msgBody = msg.slice(offset + headerLen, offset + packetLen);
-                        //console.log("packetLen="+packetLen+"  headerLen="+headerLen);
-                        //console.log(msgBody);
-                        var bjson=JSON.parse(utf8decoder.decode(msgBody));
-                        if(bjson.cmd=="DANMU_MSG"){
-                            // tongchuan里为弹幕消息，可自己根据需要进行过滤
-                            // 调用 message.show可以显示在屏幕
-                            var tongchuan= bjson.info[1]
-                            //console.log(tongchuan);
-                            //console.log(bjson); .info[2][1] 为人名
-                            var manName=bjson.info[2][1];
-
+    socket.addEventListener('message', function (msgEvent) {
+        const packet = decode(msgEvent.data);
+        switch (packet.op) {
+            case 8:
+                console.log('加入房间');
+                break;
+            case 3:
+                console.log(`人气`);
+                break;
+            case 5:
+                packet.body.forEach((body)=>{
+                    switch (body.cmd) {
+                        case 'DANMU_MSG':
+                            var tongchuan= body.info[1];
+                            var manName=body.info[2][1];
                             if(tongchuan.indexOf("【") != -1){
-                                tongchuan=tongchuan.replace("【","");
+                                tongchuan=tongchuan.replace("【"," ");
                                 tongchuan=tongchuan.replace("】","");
                                 if(!IsSikiName){
                                     //console.log("显示字幕");
@@ -335,10 +382,20 @@ function DanmuSocket() {
                                 }
 
                             }
-                        }
+                            //console.log(`${body.info[2][1]}: ${body.info[1]}`);
+                            break;
+                        case 'SEND_GIFT':
+                           // console.log(`${body.data.uname} ${body.data.action} ${body.data.num} 个 ${body.data.giftName}`);
+                            break;
+                        case 'WELCOME':
+                            //console.log(`欢迎 ${body.data.uname}`);
+                            break;
+                            // 此处省略很多其他通知类型
+                        default:
+                            console.log(body);
                     }
-                    break;
-            }
+                })
+                break;
         }
     });
 }
