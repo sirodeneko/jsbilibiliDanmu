@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name      bilibili vtb直播同传man字幕显示
-// @version   202005202
+// @version   202006261
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -57,8 +57,38 @@ danmudiv.css({
     "text-align":"center",
     "font-weight": "bold",
     "pointer-events":"none",
+    "text-shadow":"0 0 0.2em #F87, 0 0 0.2em #F87,0 0 0.2em #F87",
 });
-danmudiv.appendTo($("#live-player-ctnr"));
+if(!document.getElementById("live-player-ctnr")){
+    console.log('主页面无此元素');
+    $("iframe:eq(1)").attr('id','danmulive')
+    console.log();
+    //danmudiv.appendTo($("iframe")[0].find("#live-player-ctnr"));
+    return;
+}else{
+    danmudiv.appendTo($("#live-player-ctnr"));
+}
+
+
+// 创建控制面板
+var danmuControldiv=$('<div></div>');
+danmuControldiv.attr('id','danmuControldiv');
+danmuControldiv.css({
+    "height": "20px",
+    "display": "flex",
+    "flex-direction": "column",
+    "justify-content": "center",
+    "align-items": "center",
+    "position": "fixed",
+    "top": "100px",
+    "left": "0",
+    "width": "32px",
+    "z-index": "99999",
+    "transform": "translateY(-50%)",
+    "background":"#F87",
+});
+danmuControldiv.appendTo($("body"));
+danmuControldiv.val("")
 
 //获取当前房间编号
 var UR = document.location.toString();
@@ -236,6 +266,8 @@ class Message {
 
 const message = new Message();
 
+
+//数据包解析 感谢https://github.com/lovelyyoshino/Bilibili-Live-API/blob/master/API.WebSocket.md
 const textEncoder = new TextEncoder('utf-8');
 const textDecoder = new TextDecoder('utf-8');
 
@@ -345,6 +377,7 @@ function DanmuSocket() {
      socket.addEventListener('close', function (event) {
          console.log('WebSocket 关闭 ');
          f=0;
+         sleep(5000);
          console.log('WebSocket 重连 ');
          DanmuSocket();
     });
@@ -354,10 +387,10 @@ function DanmuSocket() {
         const packet = decode(msgEvent.data);
         switch (packet.op) {
             case 8:
-                console.log('加入房间');
+                //console.log('加入房间');
                 break;
             case 3:
-                console.log(`人气`);
+                //console.log(`人气`);
                 break;
             case 5:
                 packet.body.forEach((body)=>{
@@ -365,6 +398,10 @@ function DanmuSocket() {
                         case 'DANMU_MSG':
                             var tongchuan= body.info[1];
                             var manName=body.info[2][1];
+                            //message.show({
+                            //            text: tongchuan,
+                            //            duration: deltime,
+                            //        });
                             if(tongchuan.indexOf("【") != -1){
                                 tongchuan=tongchuan.replace("【"," ");
                                 tongchuan=tongchuan.replace("】","");
@@ -385,14 +422,14 @@ function DanmuSocket() {
                             //console.log(`${body.info[2][1]}: ${body.info[1]}`);
                             break;
                         case 'SEND_GIFT':
-                           // console.log(`${body.data.uname} ${body.data.action} ${body.data.num} 个 ${body.data.giftName}`);
+                            //console.log(`${body.data.uname} ${body.data.action} ${body.data.num} 个 ${body.data.giftName}`);
                             break;
                         case 'WELCOME':
                             //console.log(`欢迎 ${body.data.uname}`);
                             break;
                             // 此处省略很多其他通知类型
                         default:
-                            console.log(body);
+                            //console.log(body);
                     }
                 })
                 break;
