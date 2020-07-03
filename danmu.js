@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name      bilibili vtb直播同传man字幕显示
-// @version   202006261
+// @version   202007031
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -31,9 +31,11 @@ var seqOffset = 12;
 var socket;
 var utf8decoder = new TextDecoder();
 var f=0; //不知道为什么会建立两次连接，用这个标记一下。
-var zimuBottom="40px";//修改此数值改变字幕距底部的高度
-var zimuColor="red";//修改此处改变字幕颜色
-var zimuFontSize="25px";//修改此处改变字体大小
+var zimuBottom=40;//修改此数值改变字幕距底部的高度
+var zimuColor="#FF0000";//修改此处改变字幕颜色
+var zimuFontSize=25;//修改此处改变字体大小
+var zimuShadow=1;//启动弹幕阴影
+var zimuShadowColor="#000F87"// 弹幕阴影颜色
 var deltime=3000;//字幕存在时间
 var IsSikiName=0;// 1为启动同传man过滤 0为不启动，默认不启动
 //如果要启动同传man过滤，启动后需要修改SikiName里括号里的内容
@@ -50,14 +52,14 @@ danmudiv.css({
     "magin":"0 auto",
     "position":"absolute",
     "left":"0px",
-    "bottom":zimuBottom,
+    "bottom":zimuBottom+"px",
     "z-index":"14",
     "color":zimuColor,
-    "font-size": zimuFontSize,
+    "font-size": zimuFontSize+"px",
     "text-align":"center",
     "font-weight": "bold",
     "pointer-events":"none",
-    "text-shadow":"0 0 0.2em #F87, 0 0 0.2em #F87,0 0 0.2em #F87",
+    "text-shadow":"0 0 0.2em #F87, 0 0 0.2em #F87",
 });
 if(!document.getElementById("live-player-ctnr")){
     console.log('主页面无此元素');
@@ -71,24 +73,91 @@ if(!document.getElementById("live-player-ctnr")){
 
 
 // 创建控制面板
-var danmuControldiv=$('<div></div>');
+var danmuControldiv=$('<div>字幕设置</div>');
 danmuControldiv.attr('id','danmuControldiv');
 danmuControldiv.css({
-    "height": "20px",
+    "height": "60px",
+    "top": "100px",
+    "left": "0",
+    "width": "16px",
+    "z-index": "99999",
     "display": "flex",
     "flex-direction": "column",
     "justify-content": "center",
     "align-items": "center",
     "position": "fixed",
-    "top": "100px",
-    "left": "0",
-    "width": "32px",
-    "z-index": "99999",
     "transform": "translateY(-50%)",
-    "background":"#F87",
+    "background":"#FFF",
+    "border-radius": "2px",
 });
 danmuControldiv.appendTo($("body"));
-danmuControldiv.val("")
+var danmuControlBody=$(`<div id="danmuControlBody" style="flex-direction:column;position: fixed;top: 100px;left: 0;width: 16px;z-index: 99999;display: none;padding: 5px;border-radius: 5px;border: 1px solid #0AADFF;width: 300px;background-color: #FFF;">
+    <label>字体大小:</label><input type="number">px<br>
+    <label>字幕颜色:</label><input type="color"><br>
+    <label>字幕高度:</label><input type="number">px<br>
+    <label>字幕阴影:</label><input type="checkbox"><br>
+    <label>字幕阴影颜色:</label><input type="color"><br>
+    <div style="margin:0 auto;width: 120px;margin-top: 5px;">
+        <input id="danmuControlOK" type="button" value="确定">&nbsp;&nbsp;&nbsp;&nbsp;<input id="danmuControlOld" type="button" value="默认">
+    </div>
+    <div id="closeDiv" style="background-color: red;color: seashell;position: absolute;top: 3px;right: 3px;width: 15px;height: 15px;line-height: 15px;text-align: center;cursor: pointer;">x</div>
+</div>`);
+function upDanmudiv(){
+    danmudiv.css({
+        "bottom":zimuBottom+"px",
+        "color":zimuColor,
+        "font-size": zimuFontSize+"px",
+    });
+    if(zimuShadow==1){
+        danmudiv.css({
+            "text-shadow":"0 0 0.2em "+zimuShadowColor+", 0 0 0.2em "+zimuShadowColor,
+        });
+    }else{
+         danmudiv.css({
+            "text-shadow":"0 0 0",
+        });
+    }
+}
+function bindDanmuDate(){
+    var inputs=$("#danmuControlBody").children("input");
+    inputs[0].value=zimuFontSize;
+    inputs[1].value=zimuColor;
+    inputs[2].value=zimuBottom;
+    inputs[3].checked=(zimuShadow==0?false:true);
+    inputs[4].value=zimuShadowColor;
+}
+function saveDanmuDate(){
+    var inputs=$("#danmuControlBody").children("input");
+    zimuFontSize=inputs[0].value;
+    zimuColor=inputs[1].value;
+    zimuBottom=inputs[2].value;
+    zimuShadow=(inputs[3].checked?1:0);
+    zimuShadowColor=inputs[4].value;
+    upDanmudiv();
+}
+danmuControlBody.appendTo($("body"));
+$("#danmuControldiv").on('click', function () {
+    $("#danmuControlBody").css("display","flex");
+    bindDanmuDate();
+  }
+);
+$("#closeDiv").on('click', function () {
+    $("#danmuControlBody").css("display","none");
+  }
+);
+$("#danmuControlOK").on('click', function () {
+    saveDanmuDate();
+  }
+);
+$("#danmuControlOld").on('click', function () {
+    zimuBottom=40;//修改此数值改变字幕距底部的高度
+    zimuColor="#FF0000";//修改此处改变字幕颜色
+    zimuFontSize=25;//修改此处改变字体大小
+    zimuShadow=1;//启动弹幕阴影
+    zimuShadowColor="#000F87"// 弹幕阴影颜色
+    upDanmudiv();
+  }
+);
 
 //获取当前房间编号
 var UR = document.location.toString();
@@ -399,7 +468,7 @@ function DanmuSocket() {
                             var tongchuan= body.info[1];
                             var manName=body.info[2][1];
                             //message.show({
-                            //            text: tongchuan,
+                            //           text: tongchuan,
                             //            duration: deltime,
                             //        });
                             if(tongchuan.indexOf("【") != -1){
