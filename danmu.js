@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name      bilibili vtb直播同传man字幕显示
-// @version   202210430
+// @version   202210431
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -44,6 +44,7 @@ var IsSikiName = 0;// 1为启动同传man过滤 0为不启动，默认不启动
 //此变量为字符串数字，元素为字符串变量，元素内容由 , 分隔(不是中文下的 ，)
 var SikiName = ["白峰さやか"];
 var isSpecialRoom = false;
+var isTop = false;// 默认生成在底部；
 if (!document.getElementById("live-player-ctnr")) {
     console.log('特殊主题直播间，20s后执行脚本');
     isSpecialRoom = true;
@@ -67,7 +68,7 @@ function myCode() {
     console.log(danmudivwidth);
     danmudiv.css({
         "min-width": "100px",
-        "width": danmudivwidth || "900px",
+        "width": "100%",
         "magin": "0 auto",
         "position": "absolute",
         "left": "0px",
@@ -80,6 +81,12 @@ function myCode() {
         "pointer-events": "none",
         "text-shadow": "0 0 0.2em #F87, 0 0 0.2em #F87",
     });
+
+    if (isTop) {
+        danmudiv.css("bottom", "");
+        danmudiv.css("top", zimuBottom + "px");
+    }
+
     if (!document.getElementById("live-player-ctnr")) {
         console.log('主页面无此元素,尝试注入父div...');//player-ctnr
 
@@ -116,6 +123,7 @@ function myCode() {
         <label>字幕高度:</label><input type="number">px<br>
         <label>字幕阴影:</label><input type="checkbox"><br>
         <label>字幕阴影颜色:</label><input type="color"><br>
+        <label>字幕显示在顶部:</label><input type="checkbox"><br>
         <div style="margin:0 auto;width: 120px;margin-top: 5px;">
             <input id="danmuControlOK" type="button" value="确定">&nbsp;&nbsp;&nbsp;&nbsp;<input id="danmuControlOld" type="button" value="默认">
         </div>
@@ -137,6 +145,13 @@ function myCode() {
                 "text-shadow": "0 0 0",
             });
         }
+
+        if (isTop) {
+            danmudiv.css("bottom", "");
+            danmudiv.css("top", zimuBottom + "px");
+        } else {
+            danmudiv.css("bottom", zimuBottom + "px");
+        }
     }
     function bindDanmuDate() {
         var inputs = $("#danmuControlBody").children("input");
@@ -149,6 +164,7 @@ function myCode() {
         }
         inputs[3].checked = (zimuShadow == 0 ? false : true);
         inputs[4].value = zimuShadowColor;
+        inputs[5].value = (isTop == 0 ? false : true);
     }
     function saveDanmuDate() {
         var inputs = $("#danmuControlBody").children("input");
@@ -162,6 +178,7 @@ function myCode() {
         }
         zimuShadow = (inputs[3].checked ? 1 : 0);
         zimuShadowColor = inputs[4].value;
+        isTop = (inputs[5].checked ? 1 : 0);
         upDanmudiv();
     }
     danmuControlBody.appendTo($("body"));
@@ -501,8 +518,8 @@ function myCode() {
                                 var tongchuan = body.info[1];
                                 var manName = body.info[2][1];
                                 //message.show({
-                                //          text: tongchuan,
-                                //            duration: deltime,
+                                //         text: tongchuan,
+                                //           duration: deltime,
                                 //        });
                                 if (tongchuan.indexOf("【") != -1) {
                                     tongchuan = tongchuan.replace("【", " ");
