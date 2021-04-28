@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name      bilibili vtb直播同传man字幕显示
-// @version   202210429
+// @version   202210430
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -47,7 +47,7 @@ var isSpecialRoom = false;
 if (!document.getElementById("live-player-ctnr")) {
     console.log('特殊主题直播间，20s后执行脚本');
     isSpecialRoom = true;
-    zimuBottom = zimuBottom - 600;
+    zimuBottom = zimuBottom + 150;
     setTimeout(() => myCode(), 20000);
 } else {
     myCode();
@@ -126,7 +126,7 @@ function myCode() {
             "bottom": zimuBottom + "px",
             "color": zimuColor,
             "font-size": zimuFontSize + "px",
-            "z-index": "99999",
+            "z-index": "999999",
         });
         if (zimuShadow == 1) {
             danmudiv.css({
@@ -143,7 +143,7 @@ function myCode() {
         inputs[0].value = zimuFontSize;
         inputs[1].value = zimuColor;
         if (isSpecialRoom) {
-            inputs[2].value = zimuBottom + 600;
+            inputs[2].value = zimuBottom - 150;
         } else {
             inputs[2].value = zimuBottom;
         }
@@ -156,7 +156,7 @@ function myCode() {
         zimuColor = inputs[1].value;
         if (isSpecialRoom) {
             zimuBottom = inputs[2].value;
-            zimuBottom -= 600;
+            zimuBottom += 150;
         } else {
             zimuBottom = inputs[2].value;
         }
