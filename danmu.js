@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name      bilibili vtb直播同传man字幕显示
-// @version   202007031
+// @version   202210429
 // @description ！！！
 // @author    siro
 // @match     http://live.bilibili.com/*
@@ -15,10 +15,10 @@
 //脚本多次加载这可能是因为目标页面正在加载帧或iframe。
 //
 //将这下行添加到脚本代码部分的顶部：
-if (window.top != window.self) //-- Don't run on frames or iframes
+if (window.top != window.self)  //-- Don't run on frames or iframes
     return;
 
-var room_id = 22129083; //默认房间号
+var room_id = 22129083;//默认房间号
 var uid = 0;
 var url;
 var mytoken;
@@ -32,13 +32,13 @@ var seqOffset = 12;
 var socket;
 var utf8decoder = new TextDecoder();
 var f = 0; //不知道为什么会建立两次连接，用这个标记一下。
-var zimuBottom = 40; //修改此数值改变字幕距底部的高度
-var zimuColor = "#FFFFFF"; //修改此处改变字幕颜色
-var zimuFontSize = 25; //修改此处改变字体大小
-var zimuShadow = 1; //启动弹幕阴影
-var zimuShadowColor = "#66CCFF" // 弹幕阴影颜色
-var deltime = 3000; //字幕存在时间
-var IsSikiName = 0; // 1为启动同传man过滤 0为不启动，默认不启动
+var zimuBottom = 40;//修改此数值改变字幕距底部的高度
+var zimuColor = "#FFFFFF";//修改此处改变字幕颜色
+var zimuFontSize = 25;//修改此处改变字体大小
+var zimuShadow = 1;//启动弹幕阴影
+var zimuShadowColor = "#66CCFF"// 弹幕阴影颜色
+var deltime = 3000;//字幕存在时间
+var IsSikiName = 0;// 1为启动同传man过滤 0为不启动，默认不启动
 //如果要启动同传man过滤，启动后需要修改SikiName里括号里的内容
 //如SikiName=["斋藤飞鳥Offcial","小明1","小明2"],则只会显示名字为，斋藤飞鳥Offcial，小明1，小明2的同传
 //此变量为字符串数字，元素为字符串变量，元素内容由 , 分隔(不是中文下的 ，)
@@ -81,7 +81,7 @@ function myCode() {
         "text-shadow": "0 0 0.2em #F87, 0 0 0.2em #F87",
     });
     if (!document.getElementById("live-player-ctnr")) {
-        console.log('主页面无此元素,尝试注入父div...'); //player-ctnr
+        console.log('主页面无此元素,尝试注入父div...');//player-ctnr
 
         //$("iframe:eq(1)").attr('id','danmulive')
         console.log();
@@ -99,7 +99,7 @@ function myCode() {
         "top": "100px",
         "left": "0",
         "width": "16px",
-        "z-index": "99999",
+        "z-index": "999998",
         "display": "flex",
         "flex-direction": "column",
         "justify-content": "center",
@@ -110,7 +110,7 @@ function myCode() {
         "border-radius": "2px",
     });
     danmuControldiv.appendTo($("body"));
-    var danmuControlBody = $(`<div id="danmuControlBody" style="flex-direction:column;position: fixed;top: 100px;left: 0;width: 16px;z-index: 99999;display: none;padding: 5px;border-radius: 5px;border: 1px solid #0AADFF;width: 300px;background-color: #FFF;">
+    var danmuControlBody = $(`<div id="danmuControlBody" style="flex-direction:column;position: fixed;top: 100px;left: 0;width: 16px;z-index: 999999;display: none;padding: 5px;border-radius: 5px;border: 1px solid #0AADFF;width: 300px;background-color: #FFF;">
         <label>字体大小:</label><input type="number">px<br>
         <label>字幕颜色:</label><input type="color"><br>
         <label>字幕高度:</label><input type="number">px<br>
@@ -121,12 +121,12 @@ function myCode() {
         </div>
         <div id="closeDiv" style="background-color: red;color: seashell;position: absolute;top: 3px;right: 3px;width: 15px;height: 15px;line-height: 15px;text-align: center;cursor: pointer;">x</div>
     </div>`);
-
     function upDanmudiv() {
         danmudiv.css({
             "bottom": zimuBottom + "px",
             "color": zimuColor,
             "font-size": zimuFontSize + "px",
+            "z-index": "99999",
         });
         if (zimuShadow == 1) {
             danmudiv.css({
@@ -138,7 +138,6 @@ function myCode() {
             });
         }
     }
-
     function bindDanmuDate() {
         var inputs = $("#danmuControlBody").children("input");
         inputs[0].value = zimuFontSize;
@@ -151,7 +150,6 @@ function myCode() {
         inputs[3].checked = (zimuShadow == 0 ? false : true);
         inputs[4].value = zimuShadowColor;
     }
-
     function saveDanmuDate() {
         var inputs = $("#danmuControlBody").children("input");
         zimuFontSize = inputs[0].value;
@@ -170,27 +168,31 @@ function myCode() {
     $("#danmuControldiv").on('click', function () {
         $("#danmuControlBody").css("display", "flex");
         bindDanmuDate();
-    });
+    }
+    );
     $("#closeDiv").on('click', function () {
         $("#danmuControlBody").css("display", "none");
-    });
+    }
+    );
     $("#danmuControlOK").on('click', function () {
         saveDanmuDate();
-    });
+    }
+    );
     $("#danmuControlOld").on('click', function () {
-        zimuBottom = 40; //修改此数值改变字幕距底部的高度
-        zimuColor = "#FF0000"; //修改此处改变字幕颜色
-        zimuFontSize = 25; //修改此处改变字体大小
-        zimuShadow = 1; //启动弹幕阴影
-        zimuShadowColor = "#000F87" // 弹幕阴影颜色
+        zimuBottom = 40;//修改此数值改变字幕距底部的高度
+        zimuColor = "#FF0000";//修改此处改变字幕颜色
+        zimuFontSize = 25;//修改此处改变字体大小
+        zimuShadow = 1;//启动弹幕阴影
+        zimuShadowColor = "#000F87"// 弹幕阴影颜色
         upDanmudiv();
-    });
+    }
+    );
 
     //获取当前房间编号
     var UR = document.location.toString();
     var arrUrl = UR.split("//");
     var start = arrUrl[1].indexOf("/");
-    var relUrl = arrUrl[1].substring(start + 1); //stop省略，截取从start开始到结尾的所有字符
+    var relUrl = arrUrl[1].substring(start + 1);//stop省略，截取从start开始到结尾的所有字符
     if (relUrl.indexOf("?") != -1) {
         relUrl = relUrl.split("?")[0];
     }
@@ -231,9 +233,7 @@ function myCode() {
             mytoken = data.data.token;
             DanmuSocket();
         },
-        xhrFields: {
-            withCredentials: true
-        }
+        xhrFields: { withCredentials: true }
     })
     // 蜜汁字符转换
     function txtEncoder(str) {
@@ -311,7 +311,8 @@ function myCode() {
     #danmu .message.move-out {
         animation: message-move-out 0.3s ease-in-out;
         animation-fill-mode: forwards;
-    }`);
+    }`
+    );
     style.appendChild(text);
     var head = document.getElementsByTagName("head")[0];
     head.appendChild(style);
@@ -324,10 +325,7 @@ function myCode() {
             this.containerEl = document.getElementById(containerId);
         }
 
-        show({
-            text = '',
-            duration = 2000
-        }) {
+        show({ text = '', duration = 2000 }) {
             // 创建一个Element对象
             let messageEl = document.createElement('div');
             // 设置消息class，这里加上move-in可以直接看到弹出效果
@@ -398,7 +396,6 @@ function myCode() {
         writeInt(header, 0, 4, packetLen)
         return (new Uint8Array(header.concat(...data))).buffer
     }
-
     function decode(blob) {
         let buffer = new Uint8Array(blob)
         let result = {}
@@ -412,7 +409,7 @@ function myCode() {
             let offset = 0;
             while (offset < buffer.length) {
                 let packetLen = readInt(buffer, offset + 0, 4)
-                let headerLen = 16 // readInt(buffer,offset + 4,4)
+                let headerLen = 16// readInt(buffer,offset + 4,4)
                 if (result.ver == 2) {
                     let data = buffer.slice(offset + headerLen, offset + packetLen);
                     let newBuffer = pako.inflate(new Uint8Array(data));
@@ -532,9 +529,9 @@ function myCode() {
                             case 'WELCOME':
                                 //console.log(`欢迎 ${body.data.uname}`);
                                 break;
-                                // 此处省略很多其他通知类型
+                            // 此处省略很多其他通知类型
                             default:
-                                //console.log(body);
+                            //console.log(body);
                         }
                     })
                     break;
